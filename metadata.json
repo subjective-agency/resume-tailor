@@ -1,0 +1,5 @@
+{
+  "name": "AI Resume Tailor",
+  "description": "A personal resume application that uses AI to tailor your resume and generate cover letters for specific job applications.",
+  "requestFramePermissions": []
+}
