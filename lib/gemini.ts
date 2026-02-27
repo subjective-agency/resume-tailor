@@ -195,8 +195,12 @@ export async function tailorResume(
   jobTitle: string,
   jobDescription: string,
 ): Promise<ResumeData> {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("Server configuration error: GEMINI_API_KEY is not set");
+  }
+
   const ai = new GoogleGenAI({
-    apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+    apiKey: process.env.GEMINI_API_KEY,
   });
 
   const skillsList = JSON.stringify(
@@ -340,8 +344,12 @@ export async function generateCoverLetter(
   jobTitle: string,
   jobDescription: string,
 ): Promise<string> {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("Server configuration error: GEMINI_API_KEY is not set");
+  }
+
   const ai = new GoogleGenAI({
-    apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+    apiKey: process.env.GEMINI_API_KEY,
   });
 
   const optimizedSummary = tailoredData.config.about_content;

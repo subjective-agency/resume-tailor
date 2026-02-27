@@ -4,7 +4,6 @@ import React, { useState, useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import { ResumeData } from "@/types/resume";
 import { ResumeView } from "./ResumeView";
-import { tailorResume, generateCoverLetter } from "@/lib/gemini";
 import {
   Loader2,
   FileText,
@@ -34,7 +33,7 @@ export function ResumeApp({ initialData }: { initialData: ResumeData }) {
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle:
-      `Resume_${tailoredData?.config.name || canonicalData.config.name}_${tailoredData?.config.title || canonicalData.config.title}`.replace(
+      `Resume_${tailoredData?.config.name || canonicalData.config.name}_${jobTitle || tailoredData?.config.title || canonicalData.config.title}`.replace(
         /\s+/g,
         "_",
       ),
@@ -44,11 +43,22 @@ export function ResumeApp({ initialData }: { initialData: ResumeData }) {
     e.preventDefault();
     setIsProcessing(true);
     try {
-      const result = await tailorResume(
-        canonicalData,
-        jobTitle,
-        jobDescription,
-      );
+      const response = await fetch("/api/tailor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          canonicalData,
+          jobTitle,
+          jobDescription,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to tailor resume");
+      }
+
+      const result = await response.json();
       setTailoredData(result);
       setModalState("edit");
     } catch (error) {
@@ -63,12 +73,23 @@ export function ResumeApp({ initialData }: { initialData: ResumeData }) {
     if (wantsCoverLetter) {
       setIsProcessing(true);
       try {
-        const cl = await generateCoverLetter(
-          tailoredData!,
-          jobTitle,
-          jobDescription,
-        );
-        setCoverLetterText(cl);
+        const response = await fetch("/api/cover-letter", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tailoredData,
+            jobTitle,
+            jobDescription,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to generate cover letter");
+        }
+
+        const data = await response.json();
+        setCoverLetterText(data.text);
         setModalState("coverLetter");
       } catch (error) {
         console.error(error);

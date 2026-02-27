@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { ResumeData } from "@/types/resume";
 import Markdown from "react-markdown";
@@ -135,7 +137,7 @@ export const ResumeView = React.forwardRef<
           {config.name}
         </h1>
         <p className="text-xl print:text-lg text-gray-600 mt-2 font-medium">{config.title}</p>
-        <div className="flex flex-wrap print:flex-col print:gap-y-1 gap-x-6 gap-y-2 mt-4 text-sm print:text-xs text-gray-500">
+        <div className="flex flex-col gap-y-1 mt-4 text-sm print:text-xs text-gray-500">
           {emails.length > 0 && (
             <a href={`mailto:${emails[0]}`} className="hover:text-indigo-600 transition-colors">{emails[0]}</a>
           )}
