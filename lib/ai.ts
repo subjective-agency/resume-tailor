@@ -25,6 +25,7 @@ Write a professional summary that:
 2. Incorporates skills that: 1) are contained in the job description; 2) match semantically to at least 1 skill from the list of my skills
 3. Uses industry-specific terminology
 4. Demonstrates value proposition
+5. Must be condensed to ~100 words if the canonical summary is larger than 100 words.
 
 Format:
 Professional Summary:
@@ -173,7 +174,7 @@ Write a 4-paragraph cover letter that:
 2. Has introductory part in the 2nd paragraph, with explanation why I'm interested in the position, and showing some interest in the company
 3. Has 3rd paragraph dedicated to my skills and experience that are most relevant to the job, with examples of successes.
 4. In the 4th paragraph expresses gratitude for considering my application, followed with a call to action for the interview.
-5. IMPORTANT: Each of the paragraphs must be dried out to 3 sentences max.
+5. IMPORTANT: Each of the paragraphs must be dried out to 3 sentences max, and the resulting cover letter must be no more than ~180-200 words in total.
 
 Format:
 Dear {Name of Hiring Manager or "Hiring Team"},
