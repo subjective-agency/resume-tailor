@@ -3,8 +3,8 @@ import "./globals.css"; // Global styles
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "Denis Shvetsov ::: Systems Architect",
-  description: "Denis Shvetsov ::: Systems Architect",
+  title: "Jane Smith ::: Software Engineer",
+  description: "Jane Smith ::: Software Engineer",
 };
 
 export default function RootLayout({

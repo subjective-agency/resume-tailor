@@ -1,297 +1,185 @@
-repository: sproogen/resume-theme
-favicon: images/favicon.ico
+repository: your-github-username/resume-tailor  # The GitHub repository where your resume is hosted
+favicon: /favicon.ico  # Path to your favicon image
 
-version: 2
+version: 2  # Configuration version, do not change
 
 # Personal info
-name: Denis Shvetsov
-title: Systems Architect
+name: Jane Smith  # Your full name as it appears on your resume
+title: Software Engineer  # Your primary professional title
 email: 
-  - denis.shvetsov.me@gmail.com
-  - d@subjective.agency
-website: https://betterthanever2.github.io/
+  - jane@example.com  # Add multiple entries for additional contact emails
+website: https://janesmith.dev  # Your personal website or portfolio URL
 
 # Dark Mode (true/false/never)
-darkmode: false
+darkmode: false  # Set to true to enable dark mode by default
 
 # Social links
-github_username:  betterthanever2
-linkedin_username: denis-shvetsov
-
-# Additional icon links
-# additional_links:
-# - title: itsgoingto.be
-#   icon: fas fa-globe
-#   url: https://www.itsgoingto.be
-# - title: another link
-#   icon: font awesome brand icon name (eg. fab fa-twitter) (https://fontawesome.com/icons?d=gallery&m=free)
-#   url: Link url (eg. https://google.com)
+github_username: janesmith  # Your GitHub username (without the URL)
+linkedin_username: jane-smith-engineer  # Your LinkedIn username (without the URL)
 
 # Google Analytics and Tag Manager
-gtag: "G-KEPGYKHP3W"
+gtag: ""  # Google Analytics tag ID (e.g. G-XXXXXXXXXX). Leave empty to disable.
 
 # About Section
-# about_title: About Me
-about_profile_image: images/profile.jpg
-about_content: |
-  Hi, my name is Denis.
-  
-  I am a Systems Architect driven by the "first-principles" approach to engineering. While I have a deep background in business analysis and technical writing, I have transitioned into architecture by doing what I do best: building complex, functional systems from the ground up.
+about_profile_image: /images/profile.jpg  # Path to your profile picture
+about_content: |  # A short professional summary (multiline markdown)
+  Hi, I'm Jane Smith, a Software Engineer with over 8 years of experience building scalable web applications. 
+  I specialize in full-stack development using React, Node.js, and cloud technologies. 
+  My passion lies in creating intuitive user experiences and optimizing backend performance for high-traffic systems. 
+  I thrive in collaborative environments and enjoy mentoring junior developers.
 
-  My technical intuition is rooted in the "pre-LLM" era, meaning my skills are built on a solid foundation of architectural fundamentals rather than prompt dependency. I leverage modern AI tools to accelerate my workflow, but I treat them with caution and scrutiny.
-
-  What I bring to a project:
-
-    - Architectural Ownership: I don't just design on paper, I build. My recent work involves orchestrating multi-service environments using NATS, Python, and a variety of data tools.
-
-    - Mental Flexibility: I am tool-agnostic. I select the best stack for the task, so it can be a lean, independently hosted Postgres-based implementation or a massive AWS-based microservices mesh.
-
-    - Efficiency-First Mindset: I thrive in environments that value technical excellence over corporate bureaucracy. I prefer building high-impact, "sovereign" systems that solve real-world problems without unnecessary overhead.
-
-  Core Stack: <mark>NATS</mark>, <mark>Python</mark> (FastAPI/SQLAlchemy), <mark>PostgreSQL</mark>, <mark>Docker</mark>, and <mark>Strategic System Design</mark>.
-
-content:
-  - title: Skills
-    layout: list-pane
-    description: These are high-level competencies. Complete list of my skills in YAML format is available [here](https://github.com/betterthanever2/betterthanever2.github.io/blob/main/_skills.yml).
+content:  # The main sections of your resume. Order matters!
+  - title: Experience  # Section title (must match exactly for AI tailoring)
+    layout: list  # Layout type for this section
     content:
-      - title: Enterprise & Solution Architecture
-        set: Strategic Architecture & Design
-        description: Expert-level (SFIA 6) capability in aligning technology strategy with business missions using TOGAF and architectural modeling.
-      - title: Systems Design
-        set: Strategic Architecture & Design
-        description: Designing high-availability, distributed systems with a focus on microservices, event-driven patterns (NATS), and systemic scalability.
-      - title: Requirements & Analysis
-        set: Strategic Architecture & Design
-        description: Leading the full lifecycle of requirements management, from business situation analysis to technical specification.
-      - title: Back-end Engineering
-        set: Systems Development & Engineering
-        description: Advanced Python development (FastAPI, SQLModel, Pydantic) with a focus on asynchronous programming and high-performance scripts.
-      - title: Data Architecture
-        set: Systems Development & Engineering
-        description: Designing and operationalizing complex data pipelines and relational schemas using PostgreSQL, SQLAlchemy, and Redis.
-      - title: Observability & Lifecycle
-        set: Systems Development & Engineering
-        description: Implementing OTel (OpenTelemetry) for cross-service tracing and managing software lifecycles from inception to deployment (Docker, K8s).
-      - title: Delivery Management
-        set: Leadership & Governance
-        description: Coordinating complex projects and programs, ensuring successful delivery within defined cycles and quality targets.
-      - title: Knowledge & Innovation Management
-        set: Leadership & Governance
-        description: Systematically capturing organizational knowledge and identifying emerging technologies to drive competitive advantage.
+      - layout: left  # Alignment for the list item
+        title: TechCorp Inc.  # Company or organization name
+        link: https://techcorp.example.com  # Optional URL to the company website
+        link_text: TechCorp  # Text to display for the link
+        sub_title: Senior Software Engineer  # Your role or job title
+        caption: Jan 2020 - Present  # Date range or duration
+        description: |  # Detailed description of your responsibilities and achievements
+            Led the development of a microservices architecture that improved system scalability by 40%. 
+            Mentored a team of 5 junior engineers and established best practices for code reviews and CI/CD pipelines.
+            Spearheaded the migration of legacy monolithic applications to AWS, reducing infrastructure costs by 20%.
+      - layout: left
+        title: WebSolutions LLC
+        sub_title: Software Engineer
+        caption: Mar 2016 - Dec 2019
+        description: |
+            Developed and maintained multiple client-facing web applications using React and Redux.
+            Collaborated closely with designers and product managers to deliver features on time and within budget.
+            Optimized database queries, resulting in a 30% decrease in page load times.
+      - layout: left
+        title: StartUp Hub
+        sub_title: Junior Developer
+        caption: Jun 2014 - Feb 2016
+        description: |
+            Assisted in the development of a new e-commerce platform using Node.js and Express.
+            Wrote comprehensive unit tests and participated in daily stand-ups and sprint planning.
 
-  - title: Tools
+  - title: Education  # Section title
+    layout: list
+    content:
+      - layout: left
+        title: State University  # Institution name
+        caption: 2010 - 2014  # Date range
+        sub_title: Bachelor of Science in Computer Science  # Degree or qualification
+        description: |  # Additional details about your education
+          Graduated with Honors. Coursework included Data Structures, Algorithms, Database Management, and Software Engineering.
+          Active member of the Computer Science Club and participated in several hackathons.
+
+      - layout: left
+        title: Community College
+        caption: 2008 - 2010
+        sub_title: Associate of Arts in General Studies
+        description: |
+          Completed general education requirements before transferring to State University.
+
+  - title: Proof of Skill  # Section title
+    layout: text  # Layout type 'text' expects a raw multiline string
+    content: |  # Raw multiline markdown string
+      Here are a few examples of my work that demonstrate my technical capabilities:
+
+      *   **Open Source Contributions:** I am an active contributor to several popular open-source projects, including React and Webpack. You can view my pull requests on my GitHub profile.
+      *   **Personal Project - TaskManager:** A full-stack task management application built with React, Node.js, and MongoDB. It features real-time updates using WebSockets and secure user authentication.
+      *   **Technical Blog:** I regularly write articles about software engineering best practices, web development tutorials, and my experiences in the tech industry on my personal blog.
+
+  - title: Certifications  # Section title
+    layout: list
+    content:
+      - layout: left
+        title: AWS Certified Solutions Architect  # Certification name
+        sub_title: Amazon Web Services  # Issuing organization
+        caption: 2022  # Date obtained
+        description: |  # Details about the certification
+          Validates expertise in designing distributed systems on AWS.
+      - layout: left
+        title: Certified Kubernetes Administrator (CKA)
+        sub_title: Cloud Native Computing Foundation
+        caption: 2021
+        description: |
+          Demonstrates the ability to perform the responsibilities of Kubernetes administrators.
+      - layout: left
+        title: Professional Scrum Master I (PSM I)
+        sub_title: Scrum.org
+        caption: 2019
+        description: |
+          Certifies fundamental understanding of the Scrum framework and its application.
+      - layout: left
+        title: Oracle Certified Professional, Java SE 8 Programmer
+        sub_title: Oracle
+        caption: 2017
+        description: |
+          Validates proficiency in Java programming and core API usage.
+
+  - title: Skills  # Section title
+    layout: list-pane  # Layout type for displaying items in a grid/pane
+    description: A summary of my core competencies.  # Optional description for the section
+    content:
+      - title: Frontend Development  # Skill title
+        set: Engineering  # Category or group for the skill
+        description: Expert in building responsive and accessible user interfaces using React, Vue, and modern CSS frameworks.  # Description of your proficiency
+      - title: Backend Development
+        set: Engineering
+        description: Proficient in designing and implementing robust RESTful APIs and microservices using Node.js, Python, and Go.
+      - title: Cloud Infrastructure
+        set: Architecture
+        description: Extensive experience deploying and managing applications on AWS and Google Cloud Platform using Infrastructure as Code (Terraform).
+      - title: Database Design
+        set: Architecture
+        description: Skilled in designing scalable relational (PostgreSQL, MySQL) and NoSQL (MongoDB, Redis) database schemas.
+      - title: CI/CD & DevOps
+        set: Delivery
+        description: Strong background in setting up automated testing and deployment pipelines using GitHub Actions, Jenkins, and Docker.
+      - title: Agile Methodologies
+        set: Delivery
+        description: Experienced in working within Scrum and Kanban frameworks, participating in sprint planning, retrospectives, and daily stand-ups.
+      - title: Technical Leadership
+        set: Leadership
+        description: Proven ability to lead engineering teams, mentor junior developers, and drive technical decision-making.
+      - title: System Architecture
+        set: Architecture
+        description: Capable of designing high-availability, fault-tolerant distributed systems tailored to business requirements.
+
+  - title: Tools  # Section title
     layout: list-pane
     content:
-      - title: TOGAF
-        set: System Architecture
-        description: Industry standard for developing and maintaining enterprise architectures
-      - title: OpenTelemetry
-        set: System Architecture
-        description: Cross-service observability and tracing
-      - title: NATS
-        set: System Architecture
-        description: Framework for building event-driven architectures
+      - title: React  # Tool name
+        set: Frontend  # Category
+        description: Primary library for building user interfaces.  # Brief description
+      - title: Node.js
+        set: Backend
+        description: Runtime environment for executing JavaScript server-side.
       - title: Docker
-        set: System Architecture
-        description: Conteinerization mechanism
+        set: DevOps
+        description: Platform for developing, shipping, and running applications in containers.
       - title: Kubernetes
-        set: System Architecture
-        description: Deployment system
-      - title: Redis
-        set: System Architecture
-        description: General-purpose key-value storage
-      - title: Microservices
-        set: System Architecture
-        description: Approach to building applications with restricted responsibilities
-      - title: Independent Hosting
-        set: System Architecture
-        description: A typical Linux server with Docker or K8s
-      - title: AWS
-        set: System Architecture
-        description: Cloud provider with too vast of an array of services
-      - title: AsyncAPI
-        set: System Architecture
-        description: Spec for planning and describing async architectures
-      - title: git
-        set: System Architecture
-        description: Best version control
-      - title: scripting
-        set: Python
-        description: Almost any problem could be solved by writing a script
-      - title: uv
-        set: Python
-        description: It's really as fast as advertised
-      - title: FastAPI
-        set: Python
-        description: Superior Python framework for HTTP-based apps
-      - title: Pydantic
-        set: Python
-        description: Types, serialization, deserialization
-      - title: sqlalchemy
-        set: Python
-        description: A starship of database-related work
-      - title: sqlmodel
-        set: Python
-        description: Child of Pydantic & Sqlalchemy
+        set: DevOps
+        description: System for automating deployment, scaling, and management of containerized applications.
       - title: PostgreSQL
-        set: Databases
-        description: Best DB for most cases
-      - title: SQLite
-        set: Databases
-        description: Best DB for simple cases and local development
-      - title: MongoDB
-        set: Databases
-        description: Don't like it but sometimes it's necessary
-      - title: sql
-        set: Data Analysis
-        description: Super powerful query language
-      - title: pandas
-        set: Data Analysis
-        description: Data analysis
-      - title: Google Sheets
-        set: Data Analysis
-        description: Sometimes it's just good enough
-      - title: array formulas
-        set: Data Analysis
-        description: These could get pretty complex
-      - title: Linux
-        set: Tinkering
-        description: Because others are too restrictive
-      - title: Hyprland
-        set: Tinkering
-        description: Is convenient to work in
-      - title: Jira & Confluence
-        set: Business Analysis
-        description: I also have experience with other similar systems
-      - title: UML & BPMN
-        set: Business Analysis
-        description: Flows, sequences, charts, etc.
-      - title: BABOK
-        set: Business Analysis
-        description: Business analysis industry standard
+        set: Database
+        description: Primary relational database management system.
+      - title: Git
+        set: Version Control
+        description: Essential tool for source code management and collaboration.
 
-  - title: Certifications
-    layout: list
-    content:
-      - layout: top
-        title: Credly badges
-        description: |
-          <div data-iframe-width="150" data-iframe-height="270" data-share-badge-id="5e953782-6856-41f7-928b-e8736b54a80f" data-share-badge-host="https://www.credly.com"></div>
-          <script type="text/javascript" async src="//cdn.credly.com/assets/utilities/embed.js"></script>
+  - title: Broader Context  # Section title
+    layout: text  # Layout type 'text' expects a raw multiline string
+    content: |  # Raw multiline markdown string
+      Beyond my professional work, I am deeply interested in the intersection of technology and education. I volunteer as a coding instructor for local high school students, aiming to inspire the next generation of software engineers.
 
-  - title: Experience
-    layout: list
-    content:
-      - layout: left
-        title: CompStak
-        link: compstak.com
-        link_text: CompStak
-        sub_title: Senior Technical Writer
-        caption: July 2020 - Present
-        description: |
-            At CompStak I am working on setting up a consistent documentation architecture across the company's technical portfolio. I maintain day-to-day documentation activities, assist with knowledge sharing, research new tools and approaches. I created release notes template and process, and participated in defining other flows and processes. I also author and maintain API documentation, internal technical docs, runbooks, and other materials.
-      - layout: left
-        title: StageRoll
-        sub_title: Business analyst
-        caption: December 2020 - April 2021
-        description: |
-            At StageRoll I was working on the discovery stage of a new product development \- preparation for PoC, MVP and further stages of the development pretty much simultaneously. This included diagrams of various kinds, written documentation and oral communication of knowledge to other members of the team
-      - layout: left
-        title: Giggster
-        sub_title: Data analysis & visualization specialist
-        caption: November 2020 - August 2021
-        description: |
-            In my 2nd iteration with Giggster I was working on the data accumulation and analysis project \- basically a custom ETL in its own right \- with a data visualization module (Python \+ Plotly \+ Dash) as its ultimate outlet.
-      - layout: left
-        title: Business Process Technology
-        sub_title: Business analyst
-        caption: June 2020 - January 2021
-        description: |
-            At BPT I was working on several projects, including in-house products, but mostly on the crypto-currency exchange Exchanger.ee, which I led from conception and almost to release. My responsibilities included elaboration of user stories and business use cases, mockup creation, documentation maintenance, requirements clarification etc.
-      - layout: left
-        title: Giggster
-        sub_title: Business analyst
-        caption: March 2016 - November 2019
-        description: |
-            With Giggster my responsibilities included monitoring of the market (benchmark analysis); research of various aspects of the business operation; integration of the 3rd-party data into the system; writing technical documentation, including user stories and use cases; composing diagrams in UML notation; creating mockups; conducting interviews/maintaining relationships with stakeholders of different levels; etc. 
-      - layout: left
-        title: Postindustria / Jobjet
-        sub_title: Business analyst
-        caption: March 2016 - November 2019
-        description: |
-            In February of 2016 I started collaborating as a business analyst on several projects at Postindustria; mostly on *Jobjet* and *Giggster*, two flagship products of the company. Here I sourced and procured quality databases for enrichment of the operational DBs; hired freelancers for particular sub-projects and managed their activity; coordinated active communications between different stakeholders within the company, as well as external ones; wrote technical documentation; etc.
-      - layout: left
-        title: IQRIA
-        sub_title: Business analyst | Technical writer
-        caption: January 2015 - February 2016
-        description: |
-            I was hired as a technical writer first, but soon enough the spectre of my responsibilities expanded to include mock-ups & wireframe design, communication with customers, as well as research of various aspects of business processes, and other stuff related to the product development activities.
-      - layout: left
-        title: Moscow Translations Center
-        sub_title: Head of Translation Office
-        caption: March 2011 - June 2014
-        description: |
-            Responsibilities included performing translations, managing office and finances.
-
-  - title: Proof of Skill
-    layout: text
-    content: |
-      I build a project, which purpose is to collect, clean, and analyze data around a certain geographical slice of the media landscape.
-
-      As of beginning of 2026 the implementation consists of 12 applications (including dedicated orchestrator and data hub) that co-exist in the NATS-based system, with 9+ distinct cross-service flows among them. Technologies employed include website crawling (with and without LLMs), machine learning experiments (MLflow), OTel, HTTP endpoints with FastAPI, Telegram bots, various API integrations, as well as LLM-based determination of relevance (CrewAI).
-
-      If you wish to learn more, visit dedicated [documentation repository](https://github.com/subjective-agency/warch). Here you will find:
-      
-      - AsyncAPI specifications for all applications
-      - AsyncAPI specifications and diagrams for the cross-application flows
-      - Plain-language description of applications and initiatives
-      - Elaborate intentions for various features, both implemented and planned; 
-      
-      and more.
-      
-      The code for the project is located [here](https://github.com/subjective-agency/wapatools), and is currently closed to the public. Details and access would be provided on request.
-      
-  - title: Education
-    layout: list
-    content:
-      - layout: left
-        title: Kiev Slavonic University
-        caption: 2001 - 2006
-        sub_title: Master's degree in International Relations
-        description: |
-          This was a minor establishment that, however, provided solid foundation in history and generic social sciences. First two years 
-          I spent in Mykolaiv, in a local offshoot of the Uni, and in 2003 I moved to Kyiv to continue education. I recieved bachelor's 
-          degree in 2005, and master's - a year later. 
-
-      - layout: left
-        title: Russian State University of Cinema in Moscow
-        caption: 2006 - 2008
-        description: |
-          I spent 2 years studying cinema in the workshop by Sergei Solovyov & Valery Rubinchik (both - practicing film directors), and only 
-          quit due to lack of funding. I enrolled because I love movies, and always had a thing for writing. Though it didn't work out for me,
-          I did acquire a number of foundational skills, and a few life-long friends.
-
-
-
-  - title: Broader Context
-    layout: text
-    content: |
-      Alongside my interests in networks and software engineering some of my other interests and hobbies are:
-      - Modern Ukrainian poetry
-      - Logic puzzles
-      - Heavy metal music
+      In my free time, I enjoy hiking, photography, and exploring new coffee shops in the city. I am also an avid reader of science fiction and fantasy novels.
 
 # Footer
-footer_show_references: true
-# references_title: References on request (Override references text)
+footer_show_references: true  # Set to true to display a references note in the footer
 
 # Build settings
-remote_theme: sproogen/resume-theme
+remote_theme: sproogen/resume-theme  # The Jekyll theme used for the resume
 
-sass:
+sass:  # SASS configuration
   sass_dir: _sass
   style: compressed
 
-plugins:
+plugins:  # Jekyll plugins
  - jekyll-seo-tag
