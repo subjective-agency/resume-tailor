@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import OpenAI from "openai";
 import { ResumeData } from "@/types/resume";
 
 export const PROMPT_TEMPLATES = {
@@ -190,18 +191,48 @@ Sincerely,
   },
 } as const;
 
+interface AIProvider {
+  generateContent: (params: { prompt: string; jsonMode?: boolean }) => Promise<string>;
+}
+
+function getAIProvider(): AIProvider {
+  if (process.env.GEMINI_API_KEY) {
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    return {
+      generateContent: async ({ prompt, jsonMode }) => {
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: prompt,
+          config: jsonMode ? { responseMimeType: "application/json" } : undefined,
+        });
+        return response.text || "";
+      },
+    };
+  }
+
+  if (process.env.OPENAI_API_KEY) {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    return {
+      generateContent: async ({ prompt, jsonMode }) => {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [{ role: "user", content: prompt }],
+          response_format: jsonMode ? { type: "json_object" } : undefined,
+        });
+        return response.choices[0].message.content || "";
+      },
+    };
+  }
+
+  throw new Error("Server configuration error: No AI provider API key set (GEMINI_API_KEY or OPENAI_API_KEY)");
+}
+
 export async function tailorResume(
   canonicalData: ResumeData,
   jobTitle: string,
   jobDescription: string,
 ): Promise<ResumeData> {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error("Server configuration error: GEMINI_API_KEY is not set");
-  }
-
-  const ai = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
-  });
+  const provider = getAIProvider();
 
   const skillsList = JSON.stringify(
     canonicalData.skills.content?.[0]?.content || canonicalData.skills.content
@@ -262,56 +293,40 @@ export async function tailorResume(
     .replace("[job_title]", jobTitle)
     .replace("[job_description]", jobDescription);
 
-  const [summaryRes, experienceRes, skillsRes, educationRes, proofOfSkillRes, certificationsRes] = await Promise.all([
-    ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: summaryPrompt,
-    }),
-    ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: experiencePrompt,
-      config: { responseMimeType: "application/json" }
-    }),
-    ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: skillsPrompt,
-      config: { responseMimeType: "application/json" }
-    }),
-    ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: educationPrompt,
-      config: { responseMimeType: "application/json" }
-    }),
-    ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: proofOfSkillPrompt,
-      config: { responseMimeType: "application/json" }
-    }),
-    ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: certificationsPrompt,
-      config: { responseMimeType: "application/json" }
-    })
+  const [summaryText, experienceText, skillsText, educationText, proofOfSkillText, certificationsText] = await Promise.all([
+    provider.generateContent({ prompt: summaryPrompt }),
+    provider.generateContent({ prompt: experiencePrompt, jsonMode: true }),
+    provider.generateContent({ prompt: skillsPrompt, jsonMode: true }),
+    provider.generateContent({ prompt: educationPrompt, jsonMode: true }),
+    provider.generateContent({ prompt: proofOfSkillPrompt, jsonMode: true }),
+    provider.generateContent({ prompt: certificationsPrompt, jsonMode: true })
   ]);
 
-  const tailoredSummary = summaryRes.text?.replace("Professional Summary:\n", "").trim() || canonicalSummary;
+  const tailoredSummary = summaryText.replace("Professional Summary:\n", "").trim() || canonicalSummary;
   
-  const parseJsonRes = (res: any, fallback: any) => {
+  const parseJson = (text: string, fallback: any) => {
     try {
-      const text = res.text || "[]";
       const cleaned = text.replace(/^```json\n/, "").replace(/\n```$/, "");
-      return JSON.parse(cleaned);
+      // OpenAI might return an object with a key if we don't specify the schema strictly
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed)) return parsed;
+      if (typeof parsed === 'object' && parsed !== null) {
+        // Try to find an array property if it's wrapped
+        const firstArray = Object.values(parsed).find(val => Array.isArray(val));
+        if (firstArray) return firstArray;
+      }
+      return fallback;
     } catch (e) {
       console.error("Failed to parse JSON", e);
       return fallback;
     }
   };
 
-  const tailoredExperience = parseJsonRes(experienceRes, canonicalData.config.content?.find((c: any) => c.title === 'Experience')?.content || []);
-  const optimizedSkills = parseJsonRes(skillsRes, canonicalData.skills.content?.[0]?.content || []);
-  const tailoredEducation = parseJsonRes(educationRes, canonicalData.config.content?.find((c: any) => c.title === 'Education')?.content || []);
-  const tailoredProofOfSkill = parseJsonRes(proofOfSkillRes, canonicalData.config.content?.find((c: any) => c.title === 'Proof of Skill')?.content || []);
-  const tailoredCertifications = parseJsonRes(certificationsRes, canonicalData.config.content?.find((c: any) => c.title === 'Certifications')?.content || []);
+  const tailoredExperience = parseJson(experienceText, canonicalData.config.content?.find((c: any) => c.title === 'Experience')?.content || []);
+  const optimizedSkills = parseJson(skillsText, canonicalData.skills.content?.[0]?.content || []);
+  const tailoredEducation = parseJson(educationText, canonicalData.config.content?.find((c: any) => c.title === 'Education')?.content || []);
+  const tailoredProofOfSkill = parseJson(proofOfSkillText, canonicalData.config.content?.find((c: any) => c.title === 'Proof of Skill')?.content || []);
+  const tailoredCertifications = parseJson(certificationsText, canonicalData.config.content?.find((c: any) => c.title === 'Certifications')?.content || []);
 
   // Reconstruct tailored data
   const tailoredData = JSON.parse(JSON.stringify(canonicalData)); // deep copy
@@ -344,13 +359,7 @@ export async function generateCoverLetter(
   jobTitle: string,
   jobDescription: string,
 ): Promise<string> {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error("Server configuration error: GEMINI_API_KEY is not set");
-  }
-
-  const ai = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
-  });
+  const provider = getAIProvider();
 
   const optimizedSummary = tailoredData.config.about_content;
   const optimizedExperience = JSON.stringify(
@@ -367,10 +376,5 @@ export async function generateCoverLetter(
     .replace("[skills]", skillsList)
     .replace("[my_name]", tailoredData.config.name);
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-  });
-
-  return response.text || "";
+  return await provider.generateContent({ prompt });
 }

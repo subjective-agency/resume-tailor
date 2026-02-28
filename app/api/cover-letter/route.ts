@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateCoverLetter } from "@/lib/gemini";
+import { generateCoverLetter } from "@/lib/ai";
 import { ResumeData } from "@/types/resume";
 
 export async function POST(req: Request) {
@@ -23,9 +23,9 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Cover Letter API Error:", error);
     
-    if (error.message?.includes("GEMINI_API_KEY is not set")) {
+    if (error.message?.includes("No AI provider API key set")) {
       return NextResponse.json(
-        { error: "Server configuration error: GEMINI_API_KEY is not set" },
+        { error: "Server configuration error: No AI provider API key set (GEMINI_API_KEY or OPENAI_API_KEY)" },
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
