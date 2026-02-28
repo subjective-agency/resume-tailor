@@ -56,13 +56,48 @@ export const ResumeView = React.forwardRef<
 
   // Order of sections: header, about me, skills, tools, experience, education, certification. Exclude "broader context" section
   const orderedSections = ["Skills", "Tools", "Experience", "Education", "Certifications"];
+
+  const printContacts: React.ReactNode[] = [];
+  if (emails.length > 0 && emails[0]) printContacts.push(<a key="email" href={`mailto:${emails[0]}`}>{emails[0]}</a>);
+  if (config.linkedin_username) printContacts.push(<a key="li" href={`https://linkedin.com/in/${config.linkedin_username}`}>LinkedIn</a>);
+  if (config.github_username) printContacts.push(<a key="gh" href={`https://github.com/${config.github_username}`}>GitHub</a>);
+  if (config.website) printContacts.push(<a key="web" href={config.website}>Portfolio</a>);
   
   const renderSection = (section: any, idx: number) => {
     if (!section || section.title === "Broader Context") return null;
 
+    if (section.title === "Skills") {
+      return (
+        <section key={idx} className="mb-6 print:mb-4">
+          <h3 className="text-lg print:text-base font-bold uppercase tracking-wider text-gray-900 mb-1">{section.title}</h3>
+          <hr className="mb-4 print:mb-2 border-gray-300" />
+          
+          {/* Screen View */}
+          <div className="print:hidden flex flex-wrap">
+            {section.content?.map((item: any, i: number) => (
+              <SkillBadge key={i} item={item} />
+            ))}
+          </div>
+
+          {/* Print View: Replace with detailed skills */}
+          <div className="hidden print:block space-y-1">
+            {skills?.content?.filter((s:any) => s.title !== "Broader Context").map((detailedSection: any, sIdx: number) => (
+              <div key={sIdx} className="break-inside-avoid">
+                <span className="font-bold text-gray-900 mr-2">{detailedSection.title}:</span>
+                <span className="text-gray-800 leading-relaxed">
+                  {detailedSection.content?.map((item: any) => item.title).join(", ")}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
     return (
       <section key={idx} className="mb-6 print:mb-4">
-        <h2 className="text-lg font-bold uppercase tracking-wider text-gray-900 border-b border-gray-300 mb-4 pb-1 print:mb-2">{section.title}</h2>
+        <h3 className="text-lg print:text-base font-bold uppercase tracking-wider text-gray-900 mb-1">{section.title}</h3>
+        <hr className="mb-4 print:mb-2 border-gray-300" />
         
         {section.description && (
           <div className="text-gray-700 leading-relaxed mb-4 prose prose-sm max-w-none print:hidden">
@@ -71,7 +106,7 @@ export const ResumeView = React.forwardRef<
         )}
 
         {section.layout === 'text' && typeof section.content === 'string' && (
-          <div className="text-gray-700 leading-relaxed prose prose-sm max-w-none">
+          <div className="text-gray-700 leading-relaxed prose prose-sm print:prose-p:my-0 max-w-none">
             <Markdown rehypePlugins={[rehypeRaw]}>{section.content}</Markdown>
           </div>
         )}
@@ -85,7 +120,7 @@ export const ResumeView = React.forwardRef<
               ))}
             </div>
             {/* Print View */}
-            <div className="hidden print:block text-sm text-gray-800 leading-relaxed">
+            <div className="hidden print:block text-gray-800 leading-relaxed">
               {section.content.map((item: any) => item.title).join(", ")}
             </div>
           </div>
@@ -95,15 +130,15 @@ export const ResumeView = React.forwardRef<
           <div className="space-y-4 print:space-y-2">
             {section.content.map((item: any, i: number) => (
               <div key={i} className="break-inside-avoid">
-                <div className="flex justify-between items-baseline mb-1">
-                  <h3 className="text-lg print:text-base font-bold text-gray-900">
+                <div className="flex justify-between items-baseline mb-1 print:mb-0">
+                  <h4 className="text-lg print:text-[12px] font-bold text-gray-900">
                     {item.title}
-                    {item.sub_title && <span className="text-gray-600 font-normal ml-2">- {item.sub_title}</span>}
-                  </h3>
-                  {item.caption && <span className="text-sm text-gray-500 font-medium whitespace-nowrap ml-4">{item.caption}</span>}
+                    {item.sub_title && <span className="text-gray-600 print:text-gray-800 font-normal ml-2">- {item.sub_title}</span>}
+                  </h4>
+                  {item.caption && <span className="text-sm print:text-[11px] text-gray-500 print:text-gray-600 font-medium whitespace-nowrap ml-4">{item.caption}</span>}
                 </div>
                 {item.description && (
-                  <div className="text-sm text-gray-700 mt-1 leading-relaxed prose prose-sm max-w-none">
+                  <div className="text-sm print:text-[11px] text-gray-700 mt-1 print:mt-0 leading-relaxed prose prose-sm print:prose-p:my-0 print:prose-ul:my-0 max-w-none">
                     <div className="print:hidden">
                       <Markdown rehypePlugins={[rehypeRaw]}>{item.description}</Markdown>
                     </div>
@@ -129,16 +164,20 @@ export const ResumeView = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="max-w-4xl mx-auto p-10 bg-white text-black shadow-xl print:shadow-none print:p-8 print:m-0 font-sans print:text-[11px] print:leading-snug"
+      className="max-w-4xl mx-auto p-10 bg-white text-black shadow-xl print:shadow-none print:p-0 print:m-0 font-sans print:text-[11px] print:text-justify print:leading-snug"
     >
-      {/* Header */}
-      <header className="border-b-2 border-gray-800 pb-6 mb-6 print:pb-4 print:mb-4">
-        <h1 className="text-4xl print:text-3xl font-bold uppercase tracking-wider text-gray-900">
+      <style type="text/css" media="print">
+        {`@page { margin: 50px; }`}
+      </style>
+
+      {/* Screen Header */}
+      <header className="print:hidden border-b-2 border-gray-800 pb-6 mb-6">
+        <h1 className="text-4xl font-bold uppercase tracking-wider text-gray-900">
           {config.name}
         </h1>
-        <p className="text-xl print:text-lg text-gray-600 mt-2 font-medium">{config.title}</p>
-        <div className="flex flex-col gap-y-1 mt-4 text-sm print:text-xs text-gray-500">
-          {emails.length > 0 && (
+        <p className="text-xl text-gray-600 mt-2 font-medium">{config.title}</p>
+        <div className="flex flex-col gap-y-1 mt-4 text-sm text-gray-500">
+          {emails.length > 0 && emails[0] && (
             <a href={`mailto:${emails[0]}`} className="hover:text-indigo-600 transition-colors">{emails[0]}</a>
           )}
           {config.website && (
@@ -159,14 +198,30 @@ export const ResumeView = React.forwardRef<
         </div>
       </header>
 
+      {/* Print Header */}
+      <header className="hidden print:block mb-4 text-center">
+        <h1 className="font-bold text-gray-900 mb-1 uppercase tracking-wider" style={{ fontSize: '18px' }}>
+          {config.name} - {config.title}
+        </h1>
+        <div className="flex justify-center items-center gap-1.5 text-gray-800">
+          {printContacts.map((contact, i) => (
+            <React.Fragment key={i}>
+              {contact}
+              {i < printContacts.length - 1 && <span className="mx-1 text-gray-400">|</span>}
+            </React.Fragment>
+          ))}
+        </div>
+      </header>
+
       {/* About */}
       {config.about_content && (
         <section className="mb-6 print:mb-4">
-          <h2 className="text-lg font-bold uppercase tracking-wider text-gray-900 border-b border-gray-300 mb-4 pb-1 print:mb-2">
+          <h3 className="text-lg print:text-base font-bold uppercase tracking-wider text-gray-900 mb-1">
             <span className="print:hidden">About Me</span>
             <span className="hidden print:inline">Summary</span>
-          </h2>
-          <div className="text-gray-700 leading-relaxed prose prose-sm max-w-none">
+          </h3>
+          <hr className="mb-4 print:mb-2 border-gray-300" />
+          <div className="text-gray-700 leading-relaxed prose prose-sm print:prose-p:my-0 max-w-none">
             <Markdown rehypePlugins={[rehypeRaw]}>{config.about_content}</Markdown>
           </div>
         </section>
@@ -178,32 +233,28 @@ export const ResumeView = React.forwardRef<
         return section ? renderSection(section, idx) : null;
       })}
       
-      {/* Detailed Skills from _skills.yml */}
+      {/* Detailed Skills from _skills.yml (Hidden in print) */}
       {skills?.content?.map((section: any, idx: number) => {
         if (section.title === "Broader Context") return null;
         return (
-          <section key={`skill-${idx}`} className="mb-6 print:mb-4">
-            <h2 className="text-lg font-bold uppercase tracking-wider text-gray-900 border-b border-gray-300 mb-4 pb-1 print:mb-2">
+          <section key={`skill-${idx}`} className="mb-6 print:hidden">
+            <h3 className="text-lg font-bold uppercase tracking-wider text-gray-900 mb-1">
               Detailed {section.title}
-            </h2>
+            </h3>
+            <hr className="mb-4 border-gray-300" />
 
             {section.description && (
-              <div className="text-gray-700 leading-relaxed mb-4 prose prose-sm max-w-none print:hidden">
+              <div className="text-gray-700 leading-relaxed mb-4 prose prose-sm max-w-none">
                 <Markdown rehypePlugins={[rehypeRaw]}>{section.description}</Markdown>
               </div>
             )}
 
             {section.layout === "list-pane" && Array.isArray(section.content) && (
               <div>
-                {/* Screen View */}
-                <div className="print:hidden flex flex-wrap">
+                <div className="flex flex-wrap">
                   {section.content.map((item: any, i: number) => (
                     <SkillBadge key={i} item={item} />
                   ))}
-                </div>
-                {/* Print View */}
-                <div className="hidden print:block text-sm text-gray-800 leading-relaxed">
-                  {section.content.map((item: any) => item.title).join(", ")}
                 </div>
               </div>
             )}
