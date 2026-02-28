@@ -128,13 +128,22 @@ export function ResumeApp({ initialData }: { initialData: ResumeData }) {
           </div>
           <div className="flex flex-wrap gap-3">
             {tailoredData && (
-              <button
-                onClick={() => setTailoredData(null)}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Reset
-              </button>
+              <>
+                <button
+                  onClick={() => setModalState("edit")}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit Data
+                </button>
+                <button
+                  onClick={() => setTailoredData(null)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Reset
+                </button>
+              </>
             )}
             <button
               onClick={() => setModalState("tailor")}
