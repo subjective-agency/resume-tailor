@@ -54,8 +54,8 @@ export const ResumeView = React.forwardRef<
 
   const emails = Array.isArray(config.email) ? config.email : [config.email];
 
-  // Order of sections: header, about me, skills, tools, experience, education, certification. Exclude "broader context" section
-  const orderedSections = ["Skills", "Tools", "Experience", "Education", "Certifications"];
+  // Order of sections: header, about me, skills, tools, experience, proof of skill, education, certification. Exclude "broader context" section
+  const orderedSections = ["Skills", "Tools", "Experience", "Proof of Skill", "Education", "Certifications"];
 
   const printContacts: React.ReactNode[] = [];
   if (emails.length > 0 && emails[0]) printContacts.push(<a key="email" href={`mailto:${emails[0]}`}>{emails[0]}</a>);
@@ -106,9 +106,21 @@ export const ResumeView = React.forwardRef<
         )}
 
         {section.layout === 'text' && typeof section.content === 'string' && (
-          <div className="text-gray-700 leading-relaxed prose prose-sm print:prose-p:my-0 max-w-none">
-            <Markdown rehypePlugins={[rehypeRaw]}>{section.content}</Markdown>
-          </div>
+          <>
+            <div className={`text-gray-700 leading-relaxed prose prose-sm print:prose-p:my-0 max-w-none ${section.title === "Proof of Skill" ? "print:hidden" : ""}`}>
+              <Markdown rehypePlugins={[rehypeRaw]}>{section.content}</Markdown>
+            </div>
+            {section.title === "Proof of Skill" && (
+              <div className="hidden print:block text-gray-800 leading-relaxed prose prose-sm print:prose-p:my-0 max-w-none">
+                <ul className="list-disc ml-4 space-y-1">
+                  <li>Developed a multi-service data collection and analysis platform with 12+ NATS-based applications.</li>
+                  <li>Implemented automated website crawling, ML-driven relevance assessment (CrewAI), and OTel observability.</li>
+                  <li>Engineered cross-service event-driven flows with AsyncAPI specifications and centralized data management.</li>
+                  <li>Detailed specifications and architectural diagrams are available at: <a href="https://github.com/subjective-agency/warch" className="text-indigo-600">github.com/subjective-agency/warch</a></li>
+                </ul>
+              </div>
+            )}
+          </>
         )}
 
         {section.layout === 'list-pane' && Array.isArray(section.content) && (
