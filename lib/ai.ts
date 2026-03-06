@@ -1,8 +1,124 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import OpenAI from "openai";
-import { ResumeData } from "@/types/resume";
+import { ResumeData, CompanyTypeKey, GapAnalysisResult } from "@/types/resume";
+
+export const ARCHETYPE_LABELS: Record<CompanyTypeKey, string> = {
+  product_it: 'Product IT / Tech',
+  outsourcing: 'IT Outsourcing & Service',
+  startup_miltech: 'Startups & MilTech',
+  enterprise: 'Enterprise',
+  agencies: 'Digital Agencies & Creative',
+  international: 'International Corporate',
+};
+
+export const COMPANY_TYPE_INSTRUCTIONS: Record<CompanyTypeKey, string> = {
+  product_it: `You are analyzing for a PRODUCT IT/TECH environment.
+REQUIRE: business metrics (Revenue, Retention, MAU, conversion rates), hypothesis testing, ownership (responsibility for results), user impact.
+ANTI-PATTERNS: process-oriented description without result metrics, execution tasks without impact, "developed features" without business context.`,
+
+  outsourcing: `You are analyzing for an IT OUTSOURCING & SERVICE environment.
+REQUIRE: specific technical stack, English level (B2+), client communication skills, variety of projects.
+ANTI-PATTERNS: lack of technical depth, vague phrasing, no mention of English, only one project for many years.`,
+
+  startup_miltech: `You are analyzing for a STARTUPS & MILTECH environment.
+REQUIRE: speed, adaptability, "wearing many hats", domain expertise, fast iterations, MVP experience.
+ANTI-PATTERNS: long projects (2+ years) without mentioning fast iterations, corporate bureaucracy, overly formal tone, processes instead of results.`,
+
+  enterprise: `You are analyzing for a LARGE SYSTEMIC BUSINESS / ENTERPRISE environment.
+REQUIRE: stability, process optimization, legacy system experience, scale, compliance, documentation.
+ANTI-PATTERNS: "chaos", "startup mentality", job-hopping (frequent job changes), lack of long-term projects.`,
+
+  agencies: `You are analyzing for a DIGITAL AGENCIES & CREATIVE environment.
+REQUIRE: diverse portfolio, speed, creativity, client presentation skills, visual/design skills.
+ANTI-PATTERNS: boring purely technical descriptions without project context, lack of portfolio links, only one type of project.`,
+
+  international: `You are analyzing for an INTERNATIONAL CORPORATE environment (FMCG, Big4, Pharma).
+REQUIRE: soft skills, compliance, structured approach, teamwork, English C1+, international experience.
+ANTI-PATTERNS: job-hopping, slang, informality, no mention of cross-functional collaboration.`,
+};
+
+export function getCompanyTypeInstructions(companyType?: CompanyTypeKey): string {
+  if (!companyType) return "";
+  return COMPANY_TYPE_INSTRUCTIONS[companyType] ?? COMPANY_TYPE_INSTRUCTIONS.product_it;
+}
 
 export const PROMPT_TEMPLATES = {
+  company_classification: {
+    ID: "company_classification",
+    NAME: "Company Classification",
+    DESCRIPTION: "Classify company type from job description",
+    CONTENT: `Analyze the following job description and classify the company into one of the following 6 types.
+Types:
+1. product_it (Product IT / Tech companies)
+2. outsourcing (IT Outsourcing & Service)
+3. startup_miltech (Startups & MilTech)
+4. enterprise (Large Systemic Business / Enterprise)
+5. agencies (Digital Agencies & Creative)
+6. international (International Corporate, FMCG, Big4)
+
+Input:
+- Job title: [job_title]
+- Job description: [job_description]
+
+Output MUST be ONLY a valid JSON object with a single key "type" matching one of the exact string IDs above.
+Do not use markdown blocks like \`\`\`json.
+Example: {"type": "product_it"}`
+  },
+
+  gap_analysis: {
+    ID: "gap_analysis",
+    NAME: "Gap Analysis",
+    DESCRIPTION: "Performs strategic gap analysis before tailoring",
+    CONTENT: `You are an expert career strategist.
+You are analyzing a resume for a specific role and company archetype. You need to give clear advice: what to amplify, what to cut, and what skills are critically missing.
+
+CONTEXT OF ANALYSIS:
+- Target Role: [job_title]
+- Company Archetype: [archetype_label]
+- Archetype Rules:
+[company_instructions]
+
+Job Description:
+[job_description]
+
+Candidate's Canonical Experience:
+[canonical_experience]
+
+Candidate's Complete Skills:
+[skills]
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object with the following schema. No markdown blocks like \`\`\`json.
+
+{
+  "meta": {
+    "used_archetype": "[archetype_key]"
+  },
+  "strategic_audit": {
+    "score": <number 0-100>,
+    "verdict": "<short assessment, max 3 sentences>"
+  },
+  "amplify_points": [
+    { "title": "<IMPERATIVE, max 5-7 words>", "description": "<why important, max 2 sentences>" }
+  ],
+  "cut_or_fix_points": [
+    { "title": "<IMPERATIVE, max 5-7 words>", "description": "<why it's noise, max 2 sentences>" }
+  ],
+  "critical_gaps": [
+    { "gap_type": "<skill tag>", "description": "<why it's critically missing>" }
+  ]
+}
+
+RULES:
+- Score 0-30: Needs complete rework
+- Score 31-60: Needs serious adaptation
+- Score 61-80: Good foundation, needs targeted improvements
+- Score 81-100: Excellent match
+- amplify_points: min 2-3 points
+- cut_or_fix_points: min 2-3 points
+- critical_gaps: only list skills physically ABSENT from the resume but CRITICALLY REQUIRED for this role/archetype. Do not duplicate rephrasing advice here. If no gaps, return empty array [].`
+  },
+
   professional_summary: {
     ID: "professional_summary",
     NAME: "Professional Summary Generator",
@@ -12,6 +128,9 @@ export const PROMPT_TEMPLATES = {
     You are given my canonical professional summary, list of my skills, and title and description of a job I want to apply to.
     Your task is to write a new professional summary tailored to this concrete job.
     You MUST NOT imply nor state directly that I have any experience, skills, or achievements that I don't actually have.
+
+Context / Company Archetype Rules (follow these carefully):
+[archetype_instructions]
 
 Input:
 - Canonical summary: [canonical_summary]
@@ -45,6 +164,9 @@ Professional Summary:
         - If it matches with any requirement, re-word the experience item to better highlight the aspects that match with the job description and incorporate relevant skills
         - If it doesn't match with any requirement, summarize the experience item in 1 line and keep it as is
     
+Context / Company Archetype Rules (follow these carefully):
+[archetype_instructions]
+
 Input:
 - Canonical experience: [canonical_experience]
 - Job title: [job_title]
@@ -228,10 +350,87 @@ function getAIProvider(): AIProvider {
   throw new Error("Server configuration error: No AI provider API key set (GEMINI_API_KEY or OPENAI_API_KEY)");
 }
 
+const parseJsonSafe = (text: string, fallback: any) => {
+  try {
+    const cleaned = text.replace(/^```json\n/, "").replace(/\n```$/, "").replace(/^```/, "").replace(/```$/, "").trim();
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed)) return parsed;
+    if (typeof parsed === 'object' && parsed !== null) {
+      if (Array.isArray(fallback)) {
+        const firstArray = Object.values(parsed).find(val => Array.isArray(val as any));
+        if (firstArray) return firstArray;
+      }
+      return parsed;
+    }
+    return fallback;
+  } catch (e) {
+    console.error("Failed to parse JSON", e);
+    return fallback;
+  }
+};
+
+export async function classifyCompany(
+  jobTitle: string,
+  jobDescription: string
+): Promise<CompanyTypeKey> {
+  const provider = getAIProvider();
+  const prompt = PROMPT_TEMPLATES.company_classification.CONTENT
+    .replace("[job_title]", jobTitle)
+    .replace("[job_description]", jobDescription);
+
+  const text = await provider.generateContent({ prompt, jsonMode: true });
+  const result = parseJsonSafe(text, { type: 'product_it' });
+  
+  if (result && result.type && Object.keys(COMPANY_TYPE_INSTRUCTIONS).includes(result.type)) {
+    return result.type as CompanyTypeKey;
+  }
+  return 'product_it';
+}
+
+export async function analyzeGaps(
+  canonicalData: ResumeData,
+  jobTitle: string,
+  jobDescription: string,
+  companyType: CompanyTypeKey
+): Promise<GapAnalysisResult> {
+  const provider = getAIProvider();
+
+  const skillsList = JSON.stringify(
+    canonicalData.skills.content?.[0]?.content || canonicalData.skills.content
+  );
+  const canonicalExperience = JSON.stringify(
+    canonicalData.config.content?.find((c: any) => c.title === 'Experience')?.content || []
+  );
+
+  const archetypeLabel = ARCHETYPE_LABELS[companyType];
+  const companyInstructions = COMPANY_TYPE_INSTRUCTIONS[companyType];
+
+  const prompt = PROMPT_TEMPLATES.gap_analysis.CONTENT
+    .replace("[job_title]", jobTitle)
+    .replace("[archetype_label]", archetypeLabel)
+    .replace("[company_instructions]", companyInstructions)
+    .replace("[job_description]", jobDescription)
+    .replace("[canonical_experience]", canonicalExperience)
+    .replace("[skills]", skillsList)
+    .replace("[archetype_key]", companyType);
+
+  const text = await provider.generateContent({ prompt, jsonMode: true });
+  const fallback: GapAnalysisResult = {
+    meta: { used_archetype: companyType },
+    strategic_audit: { score: 50, verdict: "Analysis failed to parse." },
+    amplify_points: [],
+    cut_or_fix_points: [],
+    critical_gaps: []
+  };
+  
+  return parseJsonSafe(text, fallback) as GapAnalysisResult;
+}
+
 export async function tailorResume(
   canonicalData: ResumeData,
   jobTitle: string,
   jobDescription: string,
+  companyType?: CompanyTypeKey
 ): Promise<ResumeData> {
   const provider = getAIProvider();
 
@@ -252,8 +451,11 @@ export async function tailorResume(
     canonicalData.config.content?.find((c: any) => c.title === 'Certifications')?.content || []
   );
 
+  const archetypeInstructions = getCompanyTypeInstructions(companyType);
+
   // 1. Professional Summary
   const summaryPrompt = PROMPT_TEMPLATES.professional_summary.CONTENT
+    .replace("[archetype_instructions]", archetypeInstructions)
     .replace("[canonical_summary]", canonicalSummary)
     .replace("[job_title]", jobTitle)
     .replace("[job_description]", jobDescription)
@@ -261,6 +463,7 @@ export async function tailorResume(
 
   // 2. Experience
   const experiencePrompt = PROMPT_TEMPLATES.experience_tailoring.CONTENT
+    .replace("[archetype_instructions]", archetypeInstructions)
     .replace("[position]", jobTitle)
     .replace("[canonical_experience]", canonicalExperience)
     .replace("[job_title]", jobTitle)
@@ -305,29 +508,11 @@ export async function tailorResume(
 
   const tailoredSummary = summaryText.replace("Professional Summary:\n", "").trim() || canonicalSummary;
   
-  const parseJson = (text: string, fallback: any) => {
-    try {
-      const cleaned = text.replace(/^```json\n/, "").replace(/\n```$/, "");
-      // OpenAI might return an object with a key if we don't specify the schema strictly
-      const parsed = JSON.parse(cleaned);
-      if (Array.isArray(parsed)) return parsed;
-      if (typeof parsed === 'object' && parsed !== null) {
-        // Try to find an array property if it's wrapped
-        const firstArray = Object.values(parsed).find(val => Array.isArray(val));
-        if (firstArray) return firstArray;
-      }
-      return fallback;
-    } catch (e) {
-      console.error("Failed to parse JSON", e);
-      return fallback;
-    }
-  };
-
-  const tailoredExperience = parseJson(experienceText, canonicalData.config.content?.find((c: any) => c.title === 'Experience')?.content || []);
-  const optimizedSkills = parseJson(skillsText, canonicalData.skills.content?.[0]?.content || []);
-  const tailoredEducation = parseJson(educationText, canonicalData.config.content?.find((c: any) => c.title === 'Education')?.content || []);
-  const tailoredProofOfSkill = parseJson(proofOfSkillText, canonicalData.config.content?.find((c: any) => c.title === 'Proof of Skill')?.content || []);
-  const tailoredCertifications = parseJson(certificationsText, canonicalData.config.content?.find((c: any) => c.title === 'Certifications')?.content || []);
+  const tailoredExperience = parseJsonSafe(experienceText, canonicalData.config.content?.find((c: any) => c.title === 'Experience')?.content || []);
+  const optimizedSkills = parseJsonSafe(skillsText, canonicalData.skills.content?.[0]?.content || []);
+  const tailoredEducation = parseJsonSafe(educationText, canonicalData.config.content?.find((c: any) => c.title === 'Education')?.content || []);
+  const tailoredProofOfSkill = proofOfSkillText.trim() || (canonicalData.config.content?.find((c: any) => c.title === 'Proof of Skill')?.content || "");
+  const tailoredCertifications = parseJsonSafe(certificationsText, canonicalData.config.content?.find((c: any) => c.title === 'Certifications')?.content || []);
 
   // Reconstruct tailored data
   const tailoredData = JSON.parse(JSON.stringify(canonicalData)); // deep copy
