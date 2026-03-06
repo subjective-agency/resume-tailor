@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { tailorResume } from "@/lib/ai";
-import { ResumeData } from "@/types/resume";
+import { classifyCompany, analyzeGaps } from "@/lib/ai";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { canonicalData, jobTitle, jobDescription, companyType } = body;
+    const { canonicalData, jobTitle, jobDescription } = body;
 
     if (!canonicalData || !jobTitle || !jobDescription) {
       return NextResponse.json(
@@ -14,14 +13,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const tailoredData = await tailorResume(canonicalData, jobTitle, jobDescription, companyType);
+    const companyType = await classifyCompany(jobTitle, jobDescription);
+    const gapAnalysis = await analyzeGaps(canonicalData, jobTitle, jobDescription, companyType);
 
-    return NextResponse.json(tailoredData, {
+    return NextResponse.json(gapAnalysis, {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("Tailor API Error:", error);
+    console.error("Gap Analysis API Error:", error);
     
     if (error.message?.includes("No AI provider API key set")) {
       return NextResponse.json(

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { useReactToPrint } from "react-to-print";
-import { ResumeData } from "@/types/resume";
+import { ResumeData, GapAnalysisResult } from "@/types/resume";
 import { ResumeView } from "./ResumeView";
 import {
   Loader2,
@@ -17,11 +17,13 @@ import {
 export function ResumeApp({ initialData }: { initialData: ResumeData }) {
   const [canonicalData] = useState<ResumeData>(initialData);
   const [tailoredData, setTailoredData] = useState<ResumeData | null>(null);
+  const [gapAnalysisResult, setGapAnalysisResult] = useState<GapAnalysisResult | null>(null);
 
   const [modalState, setModalState] = useState<
-    "none" | "tailor" | "edit" | "coverLetter"
+    "none" | "tailor" | "gapAnalysis" | "edit" | "coverLetter"
   >("none");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStep, setProcessingStep] = useState("");
 
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
@@ -42,6 +44,42 @@ export function ResumeApp({ initialData }: { initialData: ResumeData }) {
   const handleTailorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
+    setProcessingStep("Analyzing gaps...");
+    try {
+      const gapResponse = await fetch("/api/gap-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          canonicalData,
+          jobTitle,
+          jobDescription,
+        }),
+      });
+
+      if (!gapResponse.ok) {
+        const errorData = await gapResponse.json();
+        throw new Error(errorData.error || "Failed to analyze gaps");
+      }
+
+      const gapResult: GapAnalysisResult = await gapResponse.json();
+      setGapAnalysisResult(gapResult);
+
+      if (gapResult.critical_gaps && gapResult.critical_gaps.length > 0) {
+        setModalState("gapAnalysis");
+        setIsProcessing(false);
+      } else {
+        await executeTailoring(gapResult.meta.used_archetype);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to process resume.");
+      setIsProcessing(false);
+    }
+  };
+
+  const executeTailoring = async (companyType?: string) => {
+    setIsProcessing(true);
+    setProcessingStep("Tailoring resume...");
     try {
       const response = await fetch("/api/tailor", {
         method: "POST",
@@ -50,6 +88,7 @@ export function ResumeApp({ initialData }: { initialData: ResumeData }) {
           canonicalData,
           jobTitle,
           jobDescription,
+          companyType,
         }),
       });
 
@@ -66,6 +105,7 @@ export function ResumeApp({ initialData }: { initialData: ResumeData }) {
       alert("Failed to tailor resume.");
     } finally {
       setIsProcessing(false);
+      setProcessingStep("");
     }
   };
 
@@ -248,10 +288,73 @@ export function ResumeApp({ initialData }: { initialData: ResumeData }) {
                   ) : (
                     <FileText className="w-4 h-4" />
                   )}
-                  {isProcessing ? "Tailoring..." : "Tailor Resume"}
+                  {isProcessing ? (processingStep || "Tailoring...") : "Tailor Resume"}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Gap Analysis Modal */}
+      {modalState === "gapAnalysis" && gapAnalysisResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-red-50">
+              <h2 className="text-xl font-semibold text-red-900 flex items-center gap-2">
+                Critical Gaps Identified
+              </h2>
+              <button
+                onClick={() => setModalState("none")}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1 space-y-6">
+              <div className="text-gray-700">
+                We analyzed the job requirements and found that your resume is missing some critical skills for this role.
+              </div>
+              
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h3 className="font-semibold text-red-800 mb-3">Critical Missing Skills:</h3>
+                <ul className="space-y-3">
+                  {gapAnalysisResult.critical_gaps.map((gap, idx) => (
+                    <li key={idx} className="flex flex-col">
+                      <span className="font-medium text-red-900">{gap.gap_type}</span>
+                      <span className="text-sm text-red-700">{gap.description}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium text-gray-700">Match Score:</span>
+                  <span className={gapAnalysisResult.strategic_audit.score < 50 ? 'font-bold text-red-600' : 'font-bold text-green-600'}>
+                    {gapAnalysisResult.strategic_audit.score}/100
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 italic">"{gapAnalysisResult.strategic_audit.verdict}"</p>
+              </div>
+            </div>
+            
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+              <button
+                onClick={() => setModalState("none")}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel Tailoring
+              </button>
+              <button
+                onClick={() => executeTailoring(gapAnalysisResult.meta.used_archetype)}
+                disabled={isProcessing}
+                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Proceed to Tailor Anyway
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -273,6 +376,72 @@ export function ResumeApp({ initialData }: { initialData: ResumeData }) {
             </div>
 
             <div className="p-6 overflow-y-auto flex-1 bg-gray-50 space-y-8">
+              {gapAnalysisResult && (
+                <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
+                    Gap Analysis Insights
+                    <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      {gapAnalysisResult.meta.used_archetype}
+                    </span>
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-medium text-gray-700">Match Score:</span>
+                          <span className={gapAnalysisResult.strategic_audit.score < 50 ? 'font-bold text-red-600' : gapAnalysisResult.strategic_audit.score < 80 ? 'font-bold text-yellow-600' : 'font-bold text-green-600'}>
+                            {gapAnalysisResult.strategic_audit.score}/100
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 italic">"{gapAnalysisResult.strategic_audit.verdict}"</p>
+                      </div>
+
+                      {gapAnalysisResult.critical_gaps.length > 0 && (
+                        <div className="mb-4">
+                          <h4 className="font-semibold text-red-800 text-sm mb-2">Missing Critical Skills:</h4>
+                          <ul className="space-y-2">
+                            {gapAnalysisResult.critical_gaps.map((gap, idx) => (
+                              <li key={idx} className="text-sm">
+                                <span className="font-medium text-red-900">{gap.gap_type}:</span> <span className="text-red-700">{gap.description}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {gapAnalysisResult.amplify_points.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold text-green-800 text-sm mb-2">What we Amplified:</h4>
+                          <ul className="space-y-2">
+                            {gapAnalysisResult.amplify_points.map((point, idx) => (
+                              <li key={idx} className="text-sm">
+                                <span className="font-medium text-green-900">{point.title}:</span> <span className="text-green-700">{point.description}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {gapAnalysisResult.cut_or_fix_points.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold text-orange-800 text-sm mb-2">What we Cut or Fixed:</h4>
+                          <ul className="space-y-2">
+                            {gapAnalysisResult.cut_or_fix_points.map((point, idx) => (
+                              <li key={idx} className="text-sm">
+                                <span className="font-medium text-orange-900">{point.title}:</span> <span className="text-orange-700">{point.description}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
                 Review the AI-tailored resume data below. You can make manual
                 adjustments before exporting.

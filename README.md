@@ -188,13 +188,6 @@ docker build -t resume-tailor .
 docker run -p 3000:3000 -e NEXT_PUBLIC_GEMINI_API_KEY=your_key_here resume-tailor
 ```
 
-### C. Google AI Studio
-
-1. Import the repository into Google AI Studio.
-2. Add `NEXT_PUBLIC_GEMINI_API_KEY` in the **Secrets** panel.
-3. `APP_URL` is auto-injected by the platform — no manual configuration needed.
-4. Run the app.
-
 ## Customising
 
 1. Edit `_config.yml` with your personal details, employment history, and resume sections.
